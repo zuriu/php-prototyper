@@ -3,6 +3,8 @@ php-prototyper
 
 The php-prototyper is a small framework that can be used to easily persist objects to a mysql database.
 
+June 10, 2013 - Welcome to php-prototyper's new home! We've decided to move this resource to github from Google Code (https://code.google.com/p/php-prototyper). Please let us know if there are any questions.
+
 Php-prototyper is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
