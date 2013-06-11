@@ -51,8 +51,6 @@ abstract class AbstractDataType extends AbstractConnector
 	// Pull data from the database (return false if not found)...
 	public function populate($attribute = NULL, $value = NULL)
 	{
-		global $init;
-
 		// Snag all the attributes that we need to persist...
 		$props = $this->reflect->getProperties(ReflectionProperty::IS_PUBLIC);
 
@@ -65,7 +63,7 @@ abstract class AbstractDataType extends AbstractConnector
 
 		// Prepare general query to pull data...
 		$stmt = $this->db->prepare("SELECT * From `" . get_class($this) . "` WHERE `$attribute` = ? LIMIT 1;");
-		if (!$stmt) $init->abort("Could not populate " . get_class($this) . " data where $attribute = $value");
+		if (!$stmt) die("Could not populate " . get_class($this) . " data where $attribute = $value");
 
 		// Bind parameters and perform query...
 		$stmt->bind_param(AbstractDataType::GetMySqliDataType($value), $value);
@@ -84,7 +82,7 @@ abstract class AbstractDataType extends AbstractConnector
 			$bindResults[] = &$$bindResult;
 		}
 		if (!@call_user_func_array(array($stmt, 'bind_result'), $bindResults))
-			$init->abort('Could not bind to database (ensure ' . get_class($this) . ' matches database attributes)');
+			die('Could not bind to database (ensure ' . get_class($this) . ' matches database attributes)');
 
 		// Bind the data and clean up...
 		$stmt->fetch();
@@ -97,9 +95,6 @@ abstract class AbstractDataType extends AbstractConnector
 			$this->$propName = &$$propName;
 		}
 
-		// Log a debugging event...
-		$init->logDebug('Populated ' . get_class($this) . " where $attribute equals $value");
-
 		// Returned the object happily!!...
 		return true;
 	}
@@ -110,8 +105,6 @@ abstract class AbstractDataType extends AbstractConnector
 	//  if it does.
 	public function update($attribute = NULL)
 	{
-		global $init;
-
 		// Snag all the attributes that we need to persist...
 		$props = $this->reflect->getProperties(ReflectionProperty::IS_PUBLIC);
 
@@ -157,12 +150,9 @@ abstract class AbstractDataType extends AbstractConnector
 			$query .= 'WHERE `' . $attribute . '` = ? LIMIT 1;';
 		}
 
-		// Log the query for debugging...
-		$init->logDebug(get_class($this) . ' update with query: ' . $query);
-
 		// Update or insert user information...
 		$stmt = $this->db->prepare($query);
-		if (!$stmt) $init->abort('Could not update ' . get_class($this) . ' data');
+		if (!$stmt) die('Could not update ' . get_class($this) . ' data');
 
 		// Assemble data types string...
 		$dataTypes = '';
@@ -194,8 +184,8 @@ abstract class AbstractDataType extends AbstractConnector
 
 		// Execute update...
 		$stmt->execute();
-		if ($stmt->errno == 1062) $init->abort('Could not update ' . get_class($this) . ' data because it is a duplicate entry');
-		if ($stmt->errno != 0) $init->abort('Could not update ' . get_class($this) . ' data (' . $stmt->errno . ')');
+		if ($stmt->errno == 1062) die('Could not update ' . get_class($this) . ' data because it is a duplicate entry');
+		if ($stmt->errno != 0) die('Could not update ' . get_class($this) . ' data (' . $stmt->errno . ')');
 
 		// If the data type has an ID and we've inserted, maintain it...
 		// Note: This code should be deprecated because we're using Uuid for PK.
@@ -219,11 +209,6 @@ abstract class AbstractDataType extends AbstractConnector
 	//  we checked $this->doesExist we would first need to run populate.
 	public function remove()
 	{
-		global $init;
-
-		// If the we don't think the data is in the database, log a warning...
-		if (!$this->doesExist) $init->logError('An attempt to remove ' . get_class($this) . ' data made on a nonexistent object');
-
 		// Get the first property (this is our primary key so we'll delete 
 		//  according to it)...
 		$props = $this->reflect->getProperties(ReflectionProperty::IS_PUBLIC);
@@ -236,15 +221,13 @@ abstract class AbstractDataType extends AbstractConnector
 		// Prepare removal statement...
 		$query = 'DELETE FROM `' . get_class($this) . '` WHERE `' . $propName . '` = ? LIMIT 1;';
 		$stmt = $this->db->prepare($query);
-		if (!$stmt) $init->abort($errorMessage);
+		if (!$stmt) die($errorMessage);
 
 		// Bind the primary key variable and remove data...
 		$stmt->bind_param(AbstractDataType::GetMySqliDataType($this->$propName), $this->$propName);
-		if (!$stmt->execute()) $init->abort($errorMessage);
+		if (!$stmt->execute()) die($errorMessage);
 		$stmt->close();
 
-		// Make a note and clean up...
-		$init->logDebug(get_class($this) . ' data has been removed where ' . $propName . ' equals ' . $this->$propName);
 		$this->unpopulate();
 	}
 

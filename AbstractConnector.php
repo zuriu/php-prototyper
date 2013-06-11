@@ -38,17 +38,12 @@ abstract class AbstractConnector
 		if (!class_exists('Initialize'))
 			die("Class '" . get_class($this) . "' requires class 'Initialize'.");
 
-		global $init;
-		
 		// Determine whether this object should handle the connection...
 		$this->handlesConnection = is_null($connectionOwner);
 
 		// Connect to database if we're the connection owner...
 		if ($this->handlesConnection)
-			$this->db = new mysqli($init->getProp('General/Database/Host'),
-				$init->getProp('General/Database/Username'),
-				$init->getProp('General/Database/Password'),
-				$init->getProp('General/Database/Name'));
+			$this->db = new mysqli('my.database.hostname', 'username', 'password', 'database-name');
 		else
 			$this->db = $connectionOwner->getDatabase();
 
